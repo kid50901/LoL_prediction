@@ -12,7 +12,15 @@ import pandas as pd
 import numpy as np 
 import sys
 import json
-
+def soupToList(soup,trReduce,tdReduce):
+    table=soup.find_all("tr")
+    datai=[]
+    for i in range(len(table)+trReduce):
+        dataj=[]
+        for j in range(len(table[i-trReduce].find_all("td"))+tdReduce):
+            dataj.append((table[i-trReduce].find_all("td"))[j-tdReduce].getText())
+        datai.append(dataj)
+    return datai
 def get_Tournaments_link(season_button_ID): 
     driver_path = 'C:\chromedriver-win64\chromedriver.exe'
     driver = webdriver.Chrome(executable_path=driver_path)
@@ -51,6 +59,41 @@ def get_Tournaments_allLink(season_button_ID_list): #輸入賽季ID>取得該賽
     for i in range(len(season_button_ID_list)):
         Tournaments_allList = Tournaments_allList + get_Tournaments_link(season_button_ID_list[i])
     return Tournaments_allList
+#def get_gamelist1Tournament(TournamentURL):
+    #driver_path = 'C:\chromedriver-win64\chromedriver.exe'
+    #driver = webdriver.Chrome(executable_path=driver_path) # 請提供您的 ChromeDriver 路徑
+    #driver.get(TournamentURL)
+
+    #text_to_wait_for = "Worlds Main Event 2023  "
+    #element_locator = (By.XPATH, f"//*[contains(text(), '{text_to_wait_for}')]")
+    #try:
+        #element = WebDriverWait(driver, 10).until(
+            #EC.text_to_be_present_in_element(element_locator, text_to_wait_for)
+        #)
+        #print(f"Element with text '{text_to_wait_for}' is present on the page.")
+        # 在这里可以进一步操作该元素
+    #except :
+        #print(f"Timed out waiting for element with text '{text_to_wait_for}' to appear on the page")
+
+    #new_page_html1 = driver.page_source
+
+    # 使用 Beautiful Soup 解析新頁面的內容
+    #gamelist1page_soup = BeautifulSoup(new_page_html1, 'html.parser')
+    #gamelist1page_td=gamelist1page_soup.find_all('td')
+    #gamelist1page_soup = BeautifulSoup(new_page_html1, 'html.parser')
+    #gamelist1page_td=gamelist1page_soup.find_all('td')
+
+    #gamelist1page_lst=[]
+    #for i in range(len(gamelist1page_td)):
+        #try:
+            #y = gamelist1page_td[i].find('a')['href']
+            #numbers = re.findall(r'\d+', y)
+            #gamelist1page_lst.append(numbers[0])
+        #except:
+            #pass
+    
+    #return gamelist1page_lst
+
 def get_gamelist1Tournament(TournamentURL):
     driver_path = 'C:\chromedriver-win64\chromedriver.exe'
     driver = webdriver.Chrome(executable_path=driver_path) # 請提供您的 ChromeDriver 路徑
@@ -71,31 +114,61 @@ def get_gamelist1Tournament(TournamentURL):
 
     # 使用 Beautiful Soup 解析新頁面的內容
     gamelist1page_soup = BeautifulSoup(new_page_html1, 'html.parser')
-    gamelist1page_td=gamelist1page_soup.find_all('td')
-    gamelist1page_soup = BeautifulSoup(new_page_html1, 'html.parser')
-    gamelist1page_td=gamelist1page_soup.find_all('td')
+    table=gamelist1page_soup.find_all("tr")
+    game_ID_list=[]
+    game_patch_list=[]
+    game_date_list=[]
+    for i in range(len(table)-1):
+        #print(table[i])
+        y = (table[i+1].find_all("td"))[0].find('a')['href']
+        numbers = re.findall(r'\d+', y)
+        game_ID_list.append(numbers[0])
 
-    gamelist1page_lst=[]
-    for i in range(len(gamelist1page_td)):
-        try:
-            y = gamelist1page_td[i].find('a')['href']
-            numbers = re.findall(r'\d+', y)
-            gamelist1page_lst.append(numbers[0])
+        game_patch= (table[i+1].find_all("td"))[5].getText()
+        game_patch_list.append(game_patch)
+
+        game_date=(table[i+1].find_all("td"))[6].getText()
+        game_date_list.append(game_date)
+
+        game_qty_str = (table[i+1].find_all("td"))[2].getText()
+        #print(game_qty_str)
+        game_qty = re.findall(r'\d+', game_qty_str)
+        try :
+            game_qty_sum=int(game_qty[0])+int(game_qty[1])
         except:
-            pass
+            game_qty_sum=0
+        
+
+        game_ID_int=int(numbers[0])
+        if game_qty_sum == 5 :
+            game_ID_list.extend([str(game_ID_int+1),str(game_ID_int+2),str(game_ID_int+3),str(game_ID_int+4)])
+            game_patch_list.extend([game_patch,game_patch,game_patch,game_patch])
+            game_date_list.extend([game_date,game_date,game_date,game_date])
+        elif game_qty_sum == 4 :
+            game_ID_list.extend([str(game_ID_int+1),str(game_ID_int+2),str(game_ID_int+3)])
+            game_patch_list.extend([game_patch,game_patch,game_patch])
+            game_date_list.extend([game_date,game_date,game_date])
+        elif game_qty_sum == 3 :
+            game_ID_list.extend([str(game_ID_int+1),str(game_ID_int+2)])
+            game_patch_list.extend([game_patch,game_patch])
+            game_date_list.extend([game_date,game_date])
+        elif game_qty_sum == 2 :
+            game_ID_list.extend([str(game_ID_int+1)])
+            game_patch_list.extend([game_patch])
+            game_date_list.extend([game_date])
+        #else : 
+            #pass
     
-    return gamelist1page_lst
-def get_gamelistAllTournament(Tournaments_allLink):
-    gamelistAllTournament=[]
-    for i in range(len(Tournaments_allLink)):
-        gamelistAllTournament=gamelistAllTournament+get_gamelist1Tournament(Tournaments_allLink[i])
-    return gamelistAllTournament
+    return [game_ID_list,game_patch_list,game_date_list]
+
 def get_gameDfAllTournament(Tournaments_allLink):
-    allGameDf = pd.DataFrame(columns=['game_ID','Tournamets'])
+    allGameDf = pd.DataFrame(columns=['game_ID','Tournamets','game_patch','game_date'])
     for i in range(len(Tournaments_allLink)):
         gamelist = get_gamelist1Tournament(Tournaments_allLink[i])
-        gameDf=pd.DataFrame(data=gamelist,columns=['game_ID'])
-        gameDf['Tournamets'] = (Tournaments_allLink[i].split('/'))[4]
+        gameDf=pd.DataFrame(data=gamelist[0],columns=['game_ID'])
+        gameDf['Tournamets'] = (Tournaments_allLink[i].split('/'))[5]
+        gameDf['game_patch'] = gamelist[1]
+        gameDf['game_date'] = gamelist[2]
         allGameDf= pd.concat([allGameDf,gameDf])
     return allGameDf
 
@@ -106,16 +179,8 @@ def team_lose_win(team_soup):
     team_name = (team_sp[0].split('\n'))[1]
     team_result = team_sp[1]
     return [team_name,team_result]
-def soupToList(soup,trReduce,tdReduce):
-    table=soup.find_all("tr")
-    datai=[]
-    for i in range(len(table)+trReduce):
-        dataj=[]
-        for j in range(len(table[1].find_all("td"))+tdReduce):
-            dataj.append((table[i-trReduce].find_all("td"))[j-tdReduce].getText())
-        datai.append(dataj)
-    return datai
-def get_computation_data(computation_ID):
+
+def get_computation_data(computation_ID,Tournamets,Patch,Date):
 
     #################################################
     headers="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -163,12 +228,15 @@ def get_computation_data(computation_ID):
     gameDfT2['TEAM'] = team_list
     gameDfT2['WIN_LOSE'] = win_lose_list
     gameDfT2['game_ID'] = computation_ID
+    gameDfT2['Tournamets'] = Tournamets
+    gameDfT2['Patch'] = Patch
+    gameDfT2['Date'] = Date
     return gameDfT2
 
-def get_computation_all_data(computation_ID_list):
-    all_gameinfo_df = get_computation_data(computation_ID_list[0])
+def get_computation_all_data(computation_ID_list,Tournamets_list,Patch_list,Date_list):
+    all_gameinfo_df = get_computation_data(computation_ID_list[0],Tournamets_list[0],Patch_list[0],Date_list[0])
     for i in range(len(computation_ID_list)-1):
-        gameinfo_df = get_computation_data(computation_ID_list[i+1])
+        gameinfo_df = get_computation_data(computation_ID_list[i+1],Tournamets_list[i+1],Patch_list[i+1],Date_list[i+1])
         all_gameinfo_df = pd.concat([all_gameinfo_df,gameinfo_df])
     return all_gameinfo_df
 
@@ -177,7 +245,11 @@ def get_all_lol_game_info(season_list, csvname):
     Tournaments_allLink_list=get_Tournaments_allLink(season_list)
     GameID_df = get_gameDfAllTournament(Tournaments_allLink_list)
     GameID_list=GameID_df['game_ID'].to_list()
-    all_game_info=get_computation_all_data(GameID_list)
+    GameTournamets_list=GameID_df['Tournamets'].to_list()
+    GamePatch_list=GameID_df['game_patch'].to_list()
+    GameDate_list=GameID_df['game_date'].to_list()
+
+    all_game_info=get_computation_all_data(GameID_list,GameTournamets_list,GamePatch_list,GameDate_list)
 
     all_game_info.to_csv('{}'.format(csvname))
 
