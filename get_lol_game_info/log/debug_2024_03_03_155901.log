@@ -1,0 +1,13 @@
+ERROR:root:[get game information] game ID 2960: Length of values (10) does not match length of index (9)
+Traceback (most recent call last):
+  File "c:\Users\kid50\project\LoL_prediction\get_lol_game_info\get_game_info.py", line 242, in get_computation_data
+    gameDfT2['TEAM'] = team_list
+  File "c:\ProgramData\Anaconda3\lib\site-packages\pandas\core\frame.py", line 3612, in __setitem__
+    self._set_item(key, value)
+  File "c:\ProgramData\Anaconda3\lib\site-packages\pandas\core\frame.py", line 3784, in _set_item
+    value = self._sanitize_column(value)
+  File "c:\ProgramData\Anaconda3\lib\site-packages\pandas\core\frame.py", line 4509, in _sanitize_column
+    com.require_length_match(value, self.index)
+  File "c:\ProgramData\Anaconda3\lib\site-packages\pandas\core\common.py", line 531, in require_length_match
+    raise ValueError(
+ValueError: Length of values (10) does not match length of index (9)
